@@ -24,6 +24,14 @@ commands:
           command: |
             curl -fsSL https://deb.nodesource.com/setup_13.x | sudo -E bash -
             sudo apt install -y nodejs
+  install_packages:
+    description: Install packages
+    steps:
+      - run:
+          name: Install packages
+          command: |
+            sudo apt update
+            sudo apt install -y tar gzip curl software-properties-common
   install_awscli:
     description: Install AWS CLI v2
     steps:
@@ -305,19 +313,33 @@ jobs:
           name: Deploy frontend objects
           command: |
             cd frontend
+            npm install
             npm run build
+            tar -czvf artifact-"${CIRCLE_WORKFLOW_ID:0:7}".tar.gz dist
             aws s3 cp dist s3://udapeople-${CIRCLE_WORKFLOW_ID:0:7} --recursive
-      - destroy-environment
-      - revert-migrations    
+      # - destroy-environment
+      # - revert-migrations    
                     
   deploy-backend:
     docker:
-      - image: cimg/base:stable
+      - image: python:3.7-alpine3.11
+        environment:
+          NODE_ENV: "production"
+          VERSION: "1"
+          ENVIRONMENT: "production"
+          TYPEORM_CONNECTION: $TYPEORM_CONNECTION
+          TYPEORM_HOST: $TYPEORM_HOST
+          TYPEORM_USERNAME: $TYPEORM_USERNAME
+          TYPEORM_PASSWORD: $TYPEORM_PASSWORD
+          TYPEORM_DATABASE: $TYPEORM_DATABASE
+          TYPEORM_PORT: $TYPEORM_PORT
+          TYPEORM_ENTITIES: $TYPEORM_ENTITIES     
     steps:
       - checkout
-      - install_awscli
-      - install_ansible
-      - install_nodejs
+      # - install_packages
+      # - install_awscli
+      # - install_ansible
+      # - install_nodejs
       - add_ssh_keys:
           fingerprints: ["ad:53:02:c9:7a:45:97:37:d3:de:c5:74:5c:b7:03:e7"]
       - attach_workspace:
@@ -325,29 +347,41 @@ jobs:
       - restore_cache:
           keys: [backend-cache]
       - run:
-          name: Install dependencies
+          name: Deploy backend
           command: |
             cd backend
             npm install
-      - run:
-          name: Package Backend folder
-          command: |
-            cd backend
             npm run build
-            tar -czf artifact.tar.gz dist/* package*
             cd ..
-            cp backend/artifact.tar.gz .circleci/ansible/roles/deploy/files
-      - run:
-          name: Deploy backend
-          command: |
-            export TYPEORM_MIGRATIONS_DIR=./migrations
-            export TYPEORM_ENTITIES=./modules/domain/**/*.entity{.ts,.js}
-            export TYPEORM_MIGRATIONS=./migrations/*.ts
-            cd .circleci/ansible
-            cat inventory.txt
-            ansible-playbook -i inventory.txt deploy-backend.yml
-      - destroy-environment
-      - revert-migrations
+            tar -C backend -czvf artifact.tar.gz .
+            cat ~/project/.circleci/ansible/inventory.txt
+            ansible-playbook -i ~/project/.circleci/ansible/inventory.txt ~/project/.circleci/ansible/deploy-backend.yml
+      # - run:
+      #     name: Install dependencies
+      #     command: |
+      #       cd backend
+      #       npm i
+      #       npm run build
+      #       cd ..
+      # - run:
+      #     name: Package Backend folder
+      #     command: |
+      #       cd backend
+      #       npm run build
+      #       tar -czf artifact.tar.gz dist/* package*
+      #       cd ..
+      #       cp backend/artifact.tar.gz .circleci/ansible/roles/deploy/files
+      # - run:
+      #     name: Deploy backend
+      #     command: |
+      #       export TYPEORM_MIGRATIONS_DIR=./migrations
+      #       export TYPEORM_ENTITIES=./modules/domain/**/*.entity{.ts,.js}
+      #       export TYPEORM_MIGRATIONS=./migrations/*.ts
+      #       cd .circleci/ansible
+      #       cat inventory.txt
+      #       ansible-playbook -i inventory.txt deploy-backend.yml
+      # - destroy-environment
+      # - revert-migrations
 
   smoke-test:
     docker:
@@ -366,9 +400,9 @@ jobs:
             export API_URL=http://${BACKEND_PUBLIC_IP}:3030
             if curl -s $API_URL/api/status | grep "ok"
             then
-              exit 1
+              exit 0
             else
-              exit 2
+              exit 1
             fi
       - run:
           name: Frontend smoke test.
@@ -454,8 +488,8 @@ workflows:
           requires: [run-migrations]
       - deploy-backend:
           requires: [run-migrations]
-      - smoke-test:
-          requires: [deploy-backend, deploy-frontend]
+      # - smoke-test:
+      #     requires: [deploy-backend, deploy-frontend]
       # - cloudfront-update:
           # requires: [smoke-test]
       # - cleanup:
