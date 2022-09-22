@@ -313,10 +313,10 @@ jobs:
           TYPEORM_ENTITIES: $TYPEORM_ENTITIES     
     steps:
       - checkout
-      # - install_packages
-      # - install_awscli
-      # - install_ansible
-      # - install_nodejs
+      - install_packages
+      - install_awscli
+      - install_ansible
+      - install_nodejs
       - add_ssh_keys:
           fingerprints: ["ad:53:02:c9:7a:45:97:37:d3:de:c5:74:5c:b7:03:e7"]
       - attach_workspace:
