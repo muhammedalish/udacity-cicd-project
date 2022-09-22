@@ -24,6 +24,33 @@ commands:
           command: |
             curl -fsSL https://deb.nodesource.com/setup_13.x | sudo -E bash -
             sudo apt install -y nodejs
+  install_awscli:
+    description: Install AWS CLI v2
+    steps:
+      - run:
+          name: Install AWS CLI v2
+          command: |
+            curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+            unzip awscliv2.zip
+            sudo ./aws/install
+  install_ansible:
+    description: Install Ansible
+    steps:
+      - run:
+          name: Install Ansible
+          command: |
+            sudo apt update
+            sudo apt install software-properties-common -y
+            sudo add-apt-repository --yes --update ppa:ansible/ansible
+            sudo apt install ansible -y
+  install_nodejs:
+    description: Install Node.js
+    steps:
+      - run:
+          name: Install Node.js 13
+          command: |
+            curl -fsSL https://deb.nodesource.com/setup_13.x | sudo -E bash -
+            sudo apt install -y nodejs
   destroy-environment:
     description: Destroy back-end and front-end cloudformation stacks given a workflow ID.
     parameters:
@@ -157,7 +184,7 @@ jobs:
       - image: cimg/base:stable
     steps:
       - checkout
-      - tools
+      - install_awscli
       - run:
           name: Ensure back-end infrastructure exists
           command: |
@@ -224,14 +251,13 @@ jobs:
             export ANSIBLE_HOST_KEY_CHECKING=False
             ansible-playbook -i ~/project/.circleci/ansible/inventory.txt ~/project/.circleci/ansible/configure-server.yml    
       - destroy-environment
-      # Here's where you will add some code to rollback on failure      
 
   run-migrations:
     docker:
       - image: cimg/node:13.8.0
     steps:
       - checkout
-      - tools
+      - install_awscli
       - restore_cache:
           keys: [backend-cache]
       - run:
@@ -257,7 +283,8 @@ jobs:
       - image: cimg/base:stable
     steps:
       - checkout
-      - tools
+      - install_awscli
+      - install_nodejs
       - run:
           name: Install dependencies
           command: |
@@ -286,7 +313,9 @@ jobs:
       - image: cimg/base:stable
     steps:
       - checkout
-      - tools
+      - install_awscli
+      - install_ansible
+      - install_nodejs
       - add_ssh_keys:
           fingerprints: ["ad:53:02:c9:7a:45:97:37:d3:de:c5:74:5c:b7:03:e7"]
       - attach_workspace:
