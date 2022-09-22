@@ -294,8 +294,8 @@ jobs:
             npm run build
             tar -czvf artifact-"${CIRCLE_WORKFLOW_ID:0:7}".tar.gz dist
             aws s3 cp dist s3://udapeople-${CIRCLE_WORKFLOW_ID:0:7} --recursive
-      # - destroy-environment
-      # - revert-migrations    
+      - destroy-environment
+      - revert-migrations    
                     
   deploy-backend:
     docker:
@@ -316,17 +316,15 @@ jobs:
           name: Install dependencies
           command: |
             cd backend
-            npm i
-            npm run build
-            cd ..
+            npm install
       - run:
-          name: Package Backend folder
+          name: Package Backend
           command: |
             cd backend
             npm run build
+            tar -czf artifact.tar.gz dist/* package*
             cd ..
-            tar -C backend -czvf artifact.tar.gz .
-            cp artifact.tar.gz .circleci/ansible/roles/deploy/files
+            cp backend/artifact.tar.gz .circleci/ansible/roles/deploy/files
       - run:
           name: Deploy backend
           command: |
@@ -336,8 +334,8 @@ jobs:
             cd .circleci/ansible
             cat inventory.txt
             ansible-playbook -i inventory.txt deploy-backend.yml
-      # - destroy-environment
-      # - revert-migrations
+      - destroy-environment
+      - revert-migrations
 
   smoke-test:
     docker:
@@ -366,9 +364,9 @@ jobs:
             FRONTEND_WEBSITE=http://udapeople-${CIRCLE_WORKFLOW_ID:0:7}.s3-website.${AWS_DEFAULT_REGION}.amazonaws.com
             if curl -s $FRONTEND_WEBSITE | grep "Welcome"
             then
-              exit 1
+              exit 0
             else
-              exit 2
+              exit 1
             fi
       - destroy-environment
       - revert-migrations
