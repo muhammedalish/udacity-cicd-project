@@ -101,6 +101,7 @@ jobs:
             cd backend
             npm install 
             npm run build
+            cp .env dist/.env
       - save_cache:
           paths: [backend/node_modules]
           key: backend-cache
@@ -239,7 +240,7 @@ jobs:
 
   run-migrations:
     docker:
-      - image: cimg/node:13.8.0
+      - image: sleavely/node-awscli:14.x
     steps:
       - checkout
       - install_awscli
@@ -249,7 +250,9 @@ jobs:
           name: Run migrations
           command: |
             cd backend
-            npm install
+            cat .env
+            npm i
+            npm run build
             npm run migrations > migrations_dump.txt
             cat migrations_dump.txt
       - run:
@@ -258,6 +261,8 @@ jobs:
             if grep -q "has been executed successfully." ~/project/backend/migrations_dump.txt
             then
               curl https://kvdb.io/${KVDB_BUCKET}/migration_${CIRCLE_WORKFLOW_ID:0:7}  -d '1'
+            else
+              curl https://kvdb.io/${KVDB_BUCKET}/migration_${CIRCLE_WORKFLOW_ID:0:7}  -d '0'
             fi
       - destroy-environment
       - revert-migrations
