@@ -11,3 +11,4 @@ URL04: Evidence of healthy back-end application
 
 
 URL05: Evidence of Prometheus Server
+http://54.174.88.4:9090/targets?search=
