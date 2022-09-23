@@ -239,11 +239,9 @@ jobs:
 
   run-migrations:
     docker:
-      - image: cimg/base:stable
+      - image: sleavely/node-awscli:14.x
     steps:
       - checkout
-      - install_awscli
-      - install_nodejs
       - restore_cache:
           keys: [backend-cache]
       - run:
