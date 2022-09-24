@@ -2,13 +2,13 @@
 https://github.com/muhammedalish/udacity-cicd-project.git
 
 URL02: Evidence of deployed and functioning front-end application in an S3 bucket
-http://udapeople-fbd3ab5.s3-website-us-east-1.amazonaws.com/#/employees
+http://udapeople-9aab2b3.s3-website-us-east-1.amazonaws.com/#/employees
 
 URL03: Evidence of deployed and functioning front-end application in CloudFront
-http://dbxvhpukocb9a.cloudfront.net/#/employees
+http://d3scq74ttqf838.cloudfront.net/#/employees
 
 URL04: Evidence of healthy back-end application
-http://23.20.38.183:3030/api/status
+http://34.239.15.15:3030/api/status
 
 URL05: Evidence of Prometheus Server
 http://3.227.91.36:9090/targets?search=
